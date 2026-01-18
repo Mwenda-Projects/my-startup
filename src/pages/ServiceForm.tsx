@@ -12,7 +12,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import ImageUpload from "@/components/uploads/ImageUpload";
 import LocationInput from "@/components/search/LocationInput";
 
 const categories = ["Tutoring", "Design", "Writing", "Programming", "Photography", "Music", "Fitness", "Other"];
@@ -30,6 +29,10 @@ const ServiceForm = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(isEditing);
+
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -43,9 +46,7 @@ const ServiceForm = () => {
   });
 
   useEffect(() => {
-    if (isEditing && id) {
-      fetchService();
-    }
+    if (isEditing && id) fetchService();
   }, [id]);
 
   const fetchService = async () => {
@@ -69,6 +70,7 @@ const ServiceForm = () => {
         latitude: data.latitude,
         longitude: data.longitude,
       });
+      setImagePreview(data.image_url || "");
     } catch (error) {
       toast({ title: "Error", description: "Failed to fetch service", variant: "destructive" });
       navigate("/dashboard");
@@ -77,13 +79,46 @@ const ServiceForm = () => {
     }
   };
 
+  // ---------------------------
+  // Fixed handleSubmit with image upload and RLS-safe insert
+  // ---------------------------
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      // ✅ Add this line to debug
+      console.log("Logged-in UID:", user?.id);
+      
       if (!user) throw new Error("Not authenticated");
+
+      // Upload image if selected
+      let uploadedUrl = formData.imageUrl || "";
+      if (imageFile) {
+        if (imageFile.size > 5 * 1024 * 1024) throw new Error("Image must be under 5MB");
+
+        const fileExt = imageFile.name.split(".").pop();
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        const filePath = fileName;
+
+        const { error: uploadError } = await supabase.storage
+          .from("service-images") // Must match your bucket
+          .upload(filePath, imageFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data, error: urlError } = supabase.storage
+          .from("service-images")
+          .getPublicUrl(filePath);
+
+        if (urlError) throw urlError;
+
+        uploadedUrl = data.publicUrl; // ✅ TypeScript-safe
+      }
 
       const serviceData = {
         user_id: user.id,
@@ -92,17 +127,14 @@ const ServiceForm = () => {
         category: formData.category,
         price: parseFloat(formData.price),
         price_type: formData.priceType,
-        image_url: formData.imageUrl || null,
+        image_url: uploadedUrl || null,
         is_active: formData.isActive,
         latitude: formData.latitude,
         longitude: formData.longitude,
       };
 
-      if (isEditing) {
-        const { error } = await supabase
-          .from("services")
-          .update(serviceData)
-          .eq("id", id);
+      if (isEditing && id) {
+        const { error } = await supabase.from("services").update(serviceData).eq("id", id);
         if (error) throw error;
         toast({ title: "Success", description: "Service updated successfully" });
       } else {
@@ -119,6 +151,21 @@ const ServiceForm = () => {
     }
   };
 
+  // ---------------------------
+  // Image preview handler
+  // ---------------------------
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setImageFile(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setImagePreview("");
+    }
+  };
+
   if (isFetching) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -130,7 +177,6 @@ const ServiceForm = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-
       <main className="pt-20 pb-16">
         <div className="container mx-auto px-4 max-w-2xl">
           <Link
@@ -147,6 +193,7 @@ const ServiceForm = () => {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Title */}
                 <div className="space-y-2">
                   <Label htmlFor="title">Service Title</Label>
                   <Input
@@ -158,6 +205,7 @@ const ServiceForm = () => {
                   />
                 </div>
 
+                {/* Description */}
                 <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
                   <Textarea
@@ -170,6 +218,7 @@ const ServiceForm = () => {
                   />
                 </div>
 
+                {/* Category & Price Type */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="category">Category</Label>
@@ -210,6 +259,7 @@ const ServiceForm = () => {
                   </div>
                 </div>
 
+                {/* Price */}
                 <div className="space-y-2">
                   <Label htmlFor="price">Price (KSh)</Label>
                   <Input
@@ -224,18 +274,27 @@ const ServiceForm = () => {
                   />
                 </div>
 
-                <ImageUpload
-                  value={formData.imageUrl}
-                  onChange={(url) => setFormData({ ...formData, imageUrl: url })}
-                  folder="services"
-                />
+                {/* Image Upload */}
+                <div className="space-y-2">
+                  <Label htmlFor="image">Upload Image (PNG/JPG, max 5MB)</Label>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg"
+                    onChange={handleImageChange}
+                  />
+                  {imagePreview && (
+                    <img src={imagePreview} alt="Preview" className="mt-2 w-48 h-48 object-cover" />
+                  )}
+                </div>
 
+                {/* Location */}
                 <LocationInput
                   latitude={formData.latitude}
                   longitude={formData.longitude}
                   onChange={(lat, lng) => setFormData({ ...formData, latitude: lat, longitude: lng })}
                 />
 
+                {/* Active Switch */}
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="isActive">Active</Label>
@@ -248,6 +307,7 @@ const ServiceForm = () => {
                   />
                 </div>
 
+                {/* Buttons */}
                 <div className="flex gap-3">
                   <Button type="button" variant="outline" className="flex-1" onClick={() => navigate("/dashboard")}>
                     Cancel

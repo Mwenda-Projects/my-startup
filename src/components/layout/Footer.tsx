@@ -101,7 +101,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-background/10 mt-12 pt-8 text-center text-background/40 text-sm px-0">
-          © {new Date().getFullYear()} HustleSphere. Made with love for students.
+          © {new Date().getFullYear()} HustleSphere. From OfliX.
         </div>
       </div>
     </footer>;
