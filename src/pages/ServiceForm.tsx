@@ -12,6 +12,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
+<<<<<<< HEAD
+=======
+import ImageUpload from "@/components/uploads/ImageUpload";
+>>>>>>> c96037b8c9b323ebed040adb1c2cad1091c343c2
 import LocationInput from "@/components/search/LocationInput";
 
 const categories = ["Tutoring", "Design", "Writing", "Programming", "Photography", "Music", "Fitness", "Other"];
@@ -29,10 +33,13 @@ const ServiceForm = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(isEditing);
+<<<<<<< HEAD
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
 
+=======
+>>>>>>> c96037b8c9b323ebed040adb1c2cad1091c343c2
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -46,7 +53,13 @@ const ServiceForm = () => {
   });
 
   useEffect(() => {
+<<<<<<< HEAD
     if (isEditing && id) fetchService();
+=======
+    if (isEditing && id) {
+      fetchService();
+    }
+>>>>>>> c96037b8c9b323ebed040adb1c2cad1091c343c2
   }, [id]);
 
   const fetchService = async () => {
@@ -70,7 +83,10 @@ const ServiceForm = () => {
         latitude: data.latitude,
         longitude: data.longitude,
       });
+<<<<<<< HEAD
       setImagePreview(data.image_url || "");
+=======
+>>>>>>> c96037b8c9b323ebed040adb1c2cad1091c343c2
     } catch (error) {
       toast({ title: "Error", description: "Failed to fetch service", variant: "destructive" });
       navigate("/dashboard");
@@ -79,14 +95,18 @@ const ServiceForm = () => {
     }
   };
 
+<<<<<<< HEAD
   // ---------------------------
   // Fixed handleSubmit with image upload and RLS-safe insert
   // ---------------------------
+=======
+>>>>>>> c96037b8c9b323ebed040adb1c2cad1091c343c2
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
+<<<<<<< HEAD
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -120,6 +140,11 @@ const ServiceForm = () => {
         uploadedUrl = data.publicUrl; // ✅ TypeScript-safe
       }
 
+=======
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+>>>>>>> c96037b8c9b323ebed040adb1c2cad1091c343c2
       const serviceData = {
         user_id: user.id,
         title: formData.title,
@@ -127,14 +152,26 @@ const ServiceForm = () => {
         category: formData.category,
         price: parseFloat(formData.price),
         price_type: formData.priceType,
+<<<<<<< HEAD
         image_url: uploadedUrl || null,
+=======
+        image_url: formData.imageUrl || null,
+>>>>>>> c96037b8c9b323ebed040adb1c2cad1091c343c2
         is_active: formData.isActive,
         latitude: formData.latitude,
         longitude: formData.longitude,
       };
 
+<<<<<<< HEAD
       if (isEditing && id) {
         const { error } = await supabase.from("services").update(serviceData).eq("id", id);
+=======
+      if (isEditing) {
+        const { error } = await supabase
+          .from("services")
+          .update(serviceData)
+          .eq("id", id);
+>>>>>>> c96037b8c9b323ebed040adb1c2cad1091c343c2
         if (error) throw error;
         toast({ title: "Success", description: "Service updated successfully" });
       } else {
@@ -151,6 +188,7 @@ const ServiceForm = () => {
     }
   };
 
+<<<<<<< HEAD
   // ---------------------------
   // Image preview handler
   // ---------------------------
@@ -166,6 +204,8 @@ const ServiceForm = () => {
     }
   };
 
+=======
+>>>>>>> c96037b8c9b323ebed040adb1c2cad1091c343c2
   if (isFetching) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -177,6 +217,10 @@ const ServiceForm = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
+<<<<<<< HEAD
+=======
+
+>>>>>>> c96037b8c9b323ebed040adb1c2cad1091c343c2
       <main className="pt-20 pb-16">
         <div className="container mx-auto px-4 max-w-2xl">
           <Link
@@ -193,7 +237,10 @@ const ServiceForm = () => {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
+<<<<<<< HEAD
                 {/* Title */}
+=======
+>>>>>>> c96037b8c9b323ebed040adb1c2cad1091c343c2
                 <div className="space-y-2">
                   <Label htmlFor="title">Service Title</Label>
                   <Input
@@ -205,7 +252,10 @@ const ServiceForm = () => {
                   />
                 </div>
 
+<<<<<<< HEAD
                 {/* Description */}
+=======
+>>>>>>> c96037b8c9b323ebed040adb1c2cad1091c343c2
                 <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
                   <Textarea
@@ -218,7 +268,10 @@ const ServiceForm = () => {
                   />
                 </div>
 
+<<<<<<< HEAD
                 {/* Category & Price Type */}
+=======
+>>>>>>> c96037b8c9b323ebed040adb1c2cad1091c343c2
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="category">Category</Label>
@@ -259,7 +312,10 @@ const ServiceForm = () => {
                   </div>
                 </div>
 
+<<<<<<< HEAD
                 {/* Price */}
+=======
+>>>>>>> c96037b8c9b323ebed040adb1c2cad1091c343c2
                 <div className="space-y-2">
                   <Label htmlFor="price">Price (KSh)</Label>
                   <Input
@@ -274,6 +330,7 @@ const ServiceForm = () => {
                   />
                 </div>
 
+<<<<<<< HEAD
                 {/* Image Upload */}
                 <div className="space-y-2">
                   <Label htmlFor="image">Upload Image (PNG/JPG, max 5MB)</Label>
@@ -288,13 +345,24 @@ const ServiceForm = () => {
                 </div>
 
                 {/* Location */}
+=======
+                <ImageUpload
+                  value={formData.imageUrl}
+                  onChange={(url) => setFormData({ ...formData, imageUrl: url })}
+                  folder="services"
+                />
+
+>>>>>>> c96037b8c9b323ebed040adb1c2cad1091c343c2
                 <LocationInput
                   latitude={formData.latitude}
                   longitude={formData.longitude}
                   onChange={(lat, lng) => setFormData({ ...formData, latitude: lat, longitude: lng })}
                 />
 
+<<<<<<< HEAD
                 {/* Active Switch */}
+=======
+>>>>>>> c96037b8c9b323ebed040adb1c2cad1091c343c2
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="isActive">Active</Label>
@@ -307,7 +375,10 @@ const ServiceForm = () => {
                   />
                 </div>
 
+<<<<<<< HEAD
                 {/* Buttons */}
+=======
+>>>>>>> c96037b8c9b323ebed040adb1c2cad1091c343c2
                 <div className="flex gap-3">
                   <Button type="button" variant="outline" className="flex-1" onClick={() => navigate("/dashboard")}>
                     Cancel
